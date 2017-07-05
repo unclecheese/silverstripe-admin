@@ -51,6 +51,7 @@ use SilverStripe\Versioned\Versioned;
 use SilverStripe\View\ArrayData;
 use SilverStripe\View\Requirements;
 use SilverStripe\View\SSViewer;
+use SilverStripe\WebpackDevServer\ModuleDevServer;
 
 /**
  * LeftAndMain is the parent class of all the two-pane views in the CMS.
@@ -156,6 +157,7 @@ class LeftAndMain extends Controller implements PermissionProvider
 
     private static $dependencies = [
         'FormSchema' => '%$'.FormSchema::class,
+        'Webpack' => '%$'.ModuleDevServer::class.'.admin'
     ];
 
     /**
@@ -262,6 +264,13 @@ class LeftAndMain extends Controller implements PermissionProvider
      * @var PjaxResponseNegotiator
      */
     protected $responseNegotiator;
+
+    protected $webpack;
+
+    public function setWebpack($webpack)
+    {
+        $this->webpack = $webpack;
+    }
 
     /**
      * Gets the combined configuration of all LeafAndMain subclasses required by the client app.
@@ -603,10 +612,9 @@ class LeftAndMain extends Controller implements PermissionProvider
             window.ss = window.ss || {};
             window.ss.config = " . $this->getCombinedClientConfig() . ";
         ");
-
-        Requirements::javascript('silverstripe/admin: client/dist/js/vendor.js');
-        Requirements::javascript('silverstripe/admin: client/dist/js/bundle.js');
-        Requirements::css('silverstripe/admin: client/dist/styles/bundle.css');
+        $this->webpack->loadJavascript('client/dist/js/vendor.js');
+        $this->webpack->loadJavascript('client/dist/js/bundle.js');
+        $this->webpack->loadCSS('client/dist/styles/bundle.css');
 
         $module = ModuleLoader::getModule('silverstripe/admin');
         Requirements::add_i18n_javascript($module->getRelativeResourcePath('client/lang'), false, true);
